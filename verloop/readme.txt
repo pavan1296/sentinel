@@ -1,0 +1,6 @@
+1. activate Virtual Environment "python venv\Scripts\activate_this.py"
+2. install requirements "pip install -r requirements.txt"
+3. change directory "cd verloop"
+4. Run server "python manage.py runserver 8090"
+5. If you want interact with UI go to this URL "http://127.0.0.1:8090/map/coordinates/"
+6. If you want to run in postman "http://127.0.0.1:8090/map/getAddressDetails/?address=Vasanth Nagar, Bengaluru, Karnataka 560052&output_format=json"
