@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL — Global Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;900&family=Barlow+Condensed:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="/static/css/main.css"/>
+</head>
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="boot-screen">
+  <div id="boot-content">
+    <div class="boot-logo">SENTINEL</div>
+    <div class="boot-sub">GLOBAL INTELLIGENCE PLATFORM v2.0</div>
+    <div id="boot-log"></div>
+    <div class="boot-bar-wrap"><div id="boot-bar"></div></div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until boot) -->
+<div id="app" style="display:none">
+
+  <!-- TOP BAR -->
+  <header id="topbar">
+    <div class="tb-left">
+      <div class="logo">SENTI<span>NEL</span></div>
+      <div class="tb-sep"></div>
+      <div class="feed-chip" id="chip-maritime"><span class="dot green"></span>MARITIME</div>
+      <div class="feed-chip" id="chip-aviation"><span class="dot blue"></span>AVIATION</div>
+      <div class="feed-chip" id="chip-military"><span class="dot red"></span>MILITARY</div>
+      <div class="feed-chip" id="chip-ws"><span class="dot amber blink"></span>CONNECTING...</div>
+    </div>
+    <div class="tb-center">
+      <div id="threat-banner">THREAT LEVEL: <span id="threat-text">CALCULATING...</span></div>
+    </div>
+    <div class="tb-right">
+      <div id="clock-utc"></div>
+      <div class="tb-sep"></div>
+      <button class="icon-btn" id="btn-alerts" onclick="UI.openAlerts()" title="Active Alerts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="alert-badge" class="badge">0</span>
+      </button>
+      <button class="icon-btn" id="btn-export" onclick="UI.exportData()" title="Export Data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-settings" onclick="UI.toggleSettings()" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <div id="main-grid">
+
+    <!-- LEFT SIDEBAR -->
+    <aside id="sidebar-left">
+
+      <!-- SEARCH -->
+      <div class="sidebar-block search-block">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="search-input" placeholder="Search ID / callsign / type..." autocomplete="off" oninput="Feed.search(this.value)">
+          <button id="search-clear" onclick="Feed.clearSearch()">✕</button>
+        </div>
+      </div>
+
+      <!-- LAYER TOGGLES -->
+      <div class="sidebar-block">
+        <div class="block-title">ACTIVE LAYERS</div>
+        <div id="layer-list">
+          <div class="layer-row active" id="lr-maritime" data-layer="maritime" onclick="Layers.toggle('maritime')">
+            <div class="layer-icon maritime">🚢</div>
+            <div class="layer-info">
+              <div class="layer-name">Maritime / AIS</div>
+              <div class="layer-sub">Vessel tracking</div>
+            </div>
+            <div class="layer-count" id="lc-maritime">0</div>
+            <div class="layer-switch"><div class="switch-thumb"></div></div>
+          </div>
+          <div class="layer-row active" id="lr-aviation" data-layer="aviation" onclick="Layers.toggle('aviation')">
+            <div class="layer-icon aviation">✈️</div>
+            <div class="layer-info">
+              <div class="layer-name">Aviation / ADS-B</div>
+              <div class="layer-sub">Aircraft tracking</div>
+            </div>
+            <div class="layer-count" id="lc-aviation">0</div>
+            <div class="layer-switch"><div class="switch-thumb"></div></div>
+          </div>
+          <div class="layer-row active" id="lr-military" data-layer="military" onclick="Layers.toggle('military')">
+            <div class="layer-icon military">⚔️</div>
+            <div class="layer-info">
+              <div class="layer-name">Military Assets</div>
+              <div class="layer-sub">Ground / naval units</div>
+            </div>
+            <div class="layer-count" id="lc-military">0</div>
+            <div class="layer-switch"><div class="switch-thumb"></div></div>
+          </div>
+          <div class="layer-row active" id="lr-zones" data-layer="zones" onclick="Layers.toggle('zones')">
+            <div class="layer-icon zones">🔶</div>
+            <div class="layer-info">
+              <div class="layer-name">Exclusion Zones</div>
+              <div class="layer-sub">Restricted areas</div>
+            </div>
+            <div class="layer-count" id="lc-zones">0</div>
+            <div class="layer-switch"><div class="switch-thumb"></div></div>
+          </div>
+          <div class="layer-row" id="lr-incidents" data-layer="incidents" onclick="Layers.toggle('incidents')">
+            <div class="layer-icon incidents">⚡</div>
+            <div class="layer-info">
+              <div class="layer-name">Incidents</div>
+              <div class="layer-sub">Active events</div>
+            </div>
+            <div class="layer-count" id="lc-incidents">0</div>
+            <div class="layer-switch"><div class="switch-thumb"></div></div>
+          </div>
+          <div class="layer-row" id="lr-naval" data-layer="naval" onclick="Layers.toggle('naval')">
+            <div class="layer-icon naval">⚓</div>
+            <div class="layer-info">
+              <div class="layer-name">Naval Bases</div>
+              <div class="layer-sub">Fixed installations</div>
+            </div>
+            <div class="layer-count" id="lc-naval">0</div>
+            <div class="layer-switch"><div class="switch-thumb"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP STYLE -->
+      <div class="sidebar-block">
+        <div class="block-title">MAP STYLE</div>
+        <div class="tile-grid">
+          <button class="tile-btn active" onclick="MapCtrl.setTile('dark', this)">DARK</button>
+          <button class="tile-btn" onclick="MapCtrl.setTile('satellite', this)">SATELLITE</button>
+          <button class="tile-btn" onclick="MapCtrl.setTile('topo', this)">TOPO</button>
+          <button class="tile-btn" onclick="MapCtrl.setTile('terrain', this)">TERRAIN</button>
+        </div>
+      </div>
+
+      <!-- LIVE STATS -->
+      <div class="sidebar-block stats-block">
+        <div class="block-title">LIVE STATISTICS</div>
+        <div class="stat-grid">
+          <div class="stat-card blue">
+            <div class="stat-val" id="sv-maritime">0</div>
+            <div class="stat-lbl">VESSELS</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-val" id="sv-aviation">0</div>
+            <div class="stat-lbl">AIRCRAFT</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-val" id="sv-military">0</div>
+            <div class="stat-lbl">MILITARY</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-val" id="sv-incidents">0</div>
+            <div class="stat-lbl">INCIDENTS</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RADAR -->
+      <div class="sidebar-block radar-block">
+        <div class="block-title">RADAR SWEEP</div>
+        <div class="radar-wrap">
+          <canvas id="radar-canvas" width="150" height="150"></canvas>
+          <div class="radar-label" id="radar-contacts">0 CONTACTS</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- MAP -->
+    <main id="map-wrapper">
+      <div id="map"></div>
+
+      <!-- MAP HUD -->
+      <div id="map-hud-top">
+        <div class="hud-pill">⊙ <span id="hud-total">0</span> TRACKED</div>
+        <div class="hud-pill">ZOOM <span id="hud-zoom">3</span></div>
+        <div class="hud-pill" id="hud-ws-pill">WS: <span id="hud-ws">CONNECTING</span></div>
+      </div>
+
+      <!-- COORDS -->
+      <div id="map-coords">
+        <span id="coord-lat">--.-°N</span> &nbsp; <span id="coord-lon">--.-°E</span>
+      </div>
+
+      <!-- QUICK FILTERS -->
+      <div id="quick-filters">
+        <button class="qf-btn active" id="qf-all" onclick="Feed.setFilter('all')">ALL</button>
+        <button class="qf-btn maritime" id="qf-maritime" onclick="Feed.setFilter('maritime')">🚢</button>
+        <button class="qf-btn aviation" id="qf-aviation" onclick="Feed.setFilter('aviation')">✈️</button>
+        <button class="qf-btn military" id="qf-military" onclick="Feed.setFilter('military')">⚔️</button>
+        <button class="qf-btn incident" id="qf-incidents" onclick="Feed.setFilter('incidents')">⚡</button>
+        <div class="qf-sep"></div>
+        <button class="qf-btn" onclick="MapCtrl.resetView()" title="Reset view">⊕</button>
+        <button class="qf-btn" onclick="MapCtrl.toggleHeatmap()" id="btn-heat" title="Heatmap">🌡</button>
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside id="sidebar-right">
+      <!-- THREAT METER -->
+      <div class="sidebar-block threat-block">
+        <div class="block-title-row">
+          <div class="block-title">THREAT ASSESSMENT</div>
+          <div id="threat-score-label" class="threat-score-lbl">—</div>
+        </div>
+        <div class="threat-meter" id="threat-meter"></div>
+        <div class="threat-categories">
+          <span class="tc green">LOW</span>
+          <span class="tc amber">ELEVATED</span>
+          <span class="tc orange">HIGH</span>
+          <span class="tc red">CRITICAL</span>
+        </div>
+      </div>
+
+      <!-- FEED TABS -->
+      <div class="sidebar-block feed-block" style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div class="feed-tabs">
+          <button class="feed-tab active" id="tab-feed" onclick="UI.switchTab('feed')">FEED</button>
+          <button class="feed-tab" id="tab-alerts" onclick="UI.switchTab('alerts')">ALERTS <span id="tab-alert-cnt" class="tab-badge">0</span></button>
+          <button class="feed-tab" id="tab-stats" onclick="UI.switchTab('stats')">ANALYTICS</button>
+        </div>
+
+        <!-- FEED LIST -->
+        <div id="feed-list" class="feed-scroll"></div>
+
+        <!-- ALERTS TAB -->
+        <div id="alerts-list" class="feed-scroll" style="display:none"></div>
+
+        <!-- STATS TAB -->
+        <div id="stats-panel" class="feed-scroll" style="display:none">
+          <div class="analytics-section">
+            <div class="analytics-title">Traffic (24h simulation)</div>
+            <canvas id="traffic-chart" width="260" height="80"></canvas>
+          </div>
+          <div class="analytics-section">
+            <div class="analytics-title">Asset Distribution</div>
+            <canvas id="dist-chart" width="260" height="80"></canvas>
+          </div>
+          <div class="analytics-grid" id="analytics-grid"></div>
+        </div>
+      </div>
+
+      <!-- SELECTED ASSET DETAIL -->
+      <div id="detail-panel" class="sidebar-block">
+        <div class="block-title-row">
+          <div class="block-title">SELECTED ASSET</div>
+          <button class="close-btn" onclick="UI.clearDetail()">✕</button>
+        </div>
+        <div id="detail-body">
+          <div class="detail-empty">Click a marker or feed item to inspect</div>
+        </div>
+      </div>
+
+    </aside>
+  </div><!-- /main-grid -->
+
+  <!-- STATUS BAR -->
+  <footer id="statusbar">
+    <div class="sb-item">SENTINEL v2.0</div>
+    <div class="sb-sep"></div>
+    <div class="sb-item">ENTITIES <span id="sb-total" class="sb-val">0</span></div>
+    <div class="sb-item">UPDATE <span class="sb-val">3s</span></div>
+    <div class="sb-item">LAST TICK <span id="sb-tick" class="sb-val">—</span></div>
+    <div class="sb-item">WS CLIENTS <span id="sb-clients" class="sb-val">—</span></div>
+    <div style="flex:1"></div>
+    <div class="sb-item">SYSTEM <span class="sb-val" style="color:var(--green)">NOMINAL</span></div>
+    <div class="sb-item" id="sb-api-status">API <span class="sb-val" style="color:var(--green)">ONLINE</span></div>
+  </footer>
+
+</div><!-- /app -->
+
+<!-- ALERTS MODAL -->
+<div id="modal-alerts" class="modal-overlay" style="display:none" onclick="UI.closeModal('modal-alerts', event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title">⚠ ACTIVE ALERTS</div>
+      <button class="modal-close" onclick="document.getElementById('modal-alerts').style.display='none'">✕</button>
+    </div>
+    <div id="modal-alerts-body" class="modal-body"></div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div id="settings-panel" class="settings-slide" style="display:none">
+  <div class="settings-head">
+    <div class="settings-title">SYSTEM SETTINGS</div>
+    <button class="modal-close" onclick="UI.toggleSettings()">✕</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-group">
+      <div class="settings-label">API BACKEND URL</div>
+      <input class="settings-input" id="setting-api-url" value="http://localhost:8000" onchange="Config.setApiUrl(this.value)">
+    </div>
+    <div class="settings-group">
+      <div class="settings-label">WEBSOCKET URL</div>
+      <input class="settings-input" id="setting-ws-url" value="ws://localhost:8000/ws" onchange="Config.setWsUrl(this.value)">
+    </div>
+    <div class="settings-group">
+      <div class="settings-label">MARKER CLUSTER</div>
+      <label class="toggle-label"><input type="checkbox" id="setting-cluster" onchange="Config.setCluster(this.checked)"> Enable clustering at low zoom</label>
+    </div>
+    <div class="settings-group">
+      <div class="settings-label">TRAIL LINES</div>
+      <label class="toggle-label"><input type="checkbox" id="setting-trails" onchange="Config.setTrails(this.checked)"> Show movement trails</label>
+    </div>
+    <div class="settings-group">
+      <div class="settings-label">AUTO-SCROLL FEED</div>
+      <label class="toggle-label"><input type="checkbox" id="setting-autoscroll" checked onchange="Config.setAutoscroll(this.checked)"> Auto-scroll intelligence feed</label>
+    </div>
+    <button class="settings-btn" onclick="WS.reconnect()">RECONNECT WEBSOCKET</button>
+    <button class="settings-btn" onclick="API.fetchAll()">FORCE REFRESH DATA</button>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div id="notif-area"></div>
+
+<!-- JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/static/js/config.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/ws.js"></script>
+<script src="/static/js/map.js"></script>
+<script src="/static/js/layers.js"></script>
+<script src="/static/js/feed.js"></script>
+<script src="/static/js/ui.js"></script>
+<script src="/static/js/radar.js"></script>
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/boot.js"></script>
+</body>
+</html>
